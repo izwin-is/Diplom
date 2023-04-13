@@ -4,11 +4,21 @@ from optapy.constraint import Joiners, ConstraintFactory
 from optapy.constraint import ConstraintCollectors
 from optapy.score import HardSoftScore
 
+def fall_in_interval(args):
+    if isinstance(args, int):
+        return 0
+    count, min_lessons, max_lessons = args
+    if count < min_lessons:
+        return min_lessons - count
+    if count > max_lessons:
+        return count - max_lessons
+    return 0
 
 def positive_score(x):
     if x < 0:
         return 0
     return x
+
 @constraint_provider
 def define_constraints(constraint_factory):
     return [
@@ -17,23 +27,53 @@ def define_constraints(constraint_factory):
         teacher_timing(constraint_factory),
         student_group_conflict(constraint_factory),
         student_group_timing(constraint_factory),
-        teacher_max_lessons(constraint_factory),
-        teacher_max_days(constraint_factory)
+        # teacher_max_lessons_total(constraint_factory),
+        one_teacher_to_group(constraint_factory),
+        # lab_start_end(constraint_factory)
         # Soft constraints
-        # teacher_max_days(constraint_factory)
-        # teacher_room_stability(constraint_factory),
-        # teacher_time_efficiency(constraint_factory),
-        # student_group_subject_variety(constraint_factory)
+        teacher_min_max_lessons_total(constraint_factory),
+        teacher_max_days(constraint_factory),
+        # teacher_min_lessons_total(constraint_factory),
     ]
 
+def one_teacher_to_group(constraint_factory: ConstraintFactory):
+    return constraint_factory.for_each(Lesson) \
+            .group_by(lambda lesson: lesson.student_group,
+                      lambda lesson: lesson.subject,
+                      ConstraintCollectors.count_distinct()) \
+            .penalize("More than one teacher to one group",
+                      HardSoftScore.ONE_HARD,
+                      lambda group, subject, count: positive_score(count - 1))
 
-def teacher_max_lessons(constraint_factory: ConstraintFactory):
+
+# Работает правильно, но алгоритм плохо оптимизируется
+def teacher_min_max_lessons_total(constraint_factory: ConstraintFactory):
     return constraint_factory.for_each(Lesson) \
             .group_by(lambda lesson: lesson.teacher,
                       ConstraintCollectors.count()) \
+            .penalize("Too many or too few lessons for teacher",
+                      HardSoftScore.ONE_SOFT,
+                      lambda teacher, count: positive_score(-min(teacher.max_lessons - count,
+                                                                 count - teacher.min_lessons)))
+
+def teacher_max_lessons_total(constraint_factory: ConstraintFactory):
+    return constraint_factory.for_each(Lesson) \
+            .group_by(lambda lesson: lesson.teacher,
+                      ConstraintCollectors.count()) \
+            .filter(lambda teacher, count: count - teacher.max_lessons > 0) \
             .penalize("Too many lessons for teacher",
                       HardSoftScore.ONE_HARD,
-                      lambda teacher, count: positive_score(count - teacher.max_lessons))
+                      lambda teacher, count: count)
+
+
+def teacher_min_lessons_total(constraint_factory: ConstraintFactory):
+    return constraint_factory.for_each(Lesson) \
+            .group_by(lambda lesson: lesson.teacher,
+                      ConstraintCollectors.count()) \
+            .filter(lambda teacher, count: teacher.min_lessons - count > 0) \
+            .penalize("Too few lessons for teacher",
+                      HardSoftScore.ONE_HARD,
+                      lambda teacher, count: count)
 
 def teacher_max_days(constraint_factory: ConstraintFactory):
     return constraint_factory.for_each(Lesson) \
@@ -43,32 +83,9 @@ def teacher_max_days(constraint_factory: ConstraintFactory):
             .group_by(lambda teacher, days, count: teacher,
                       ConstraintCollectors.countTri()) \
             .penalize("",
-                      HardSoftScore.ONE_HARD,
-                      lambda teacher, count: positive_score(count - teacher.max_days))
-    # return constraint_factory.for_each(Lesson) \
-    #         .group_by(lambda lesson: lesson.teacher,
-    #                   lambda lesson: lesson.timeslot.week_day,
-    #                   ConstraintCollectors.count_distinct()) \
-    #         .penalize("",
-    #                   HardSoftScore.ONE_HARD,
-    #                   lambda teacher, days, count: positive_score(count - teacher.max_days))
-    # return constraint_factory.for_each(Lesson) \
-    #         .group_by(lambda lesson: lesson.teacher,
-    #                   lambda lesson: lesson.timeslot.week_day,
-    #                   ConstraintCollectors.count())\
-    #         .penalize("Too many working days for teacher",
-    #                   HardSoftScore.ONE_HARD,
-    #                   lambda teacher, a, count: positive_score(count - teacher.max_days))
-    # return constraint_factory.for_each(Lesson) \
-    #         .group_by(lambda lesson: lesson.teacher,
-    #                   ConstraintCollectors.conditionally(
-    #                       lambda lesson: calculate_week_day(lesson.timeslot.id),
-    #                       ConstraintCollectors.count_distinct()
-    #                   )
-    #         )\
-    #         .penalize("Too many working days for teacher",
-    #                   HardSoftScore.ONE_HARD,
-    #                   lambda teacher, count: positive_score(count - teacher.max_days))
+                      HardSoftScore.ONE_SOFT,
+                      lambda teacher, count: 3 * positive_score(count - teacher.max_days))
+
 
 def teacher_timing(constraint_factory: ConstraintFactory):
     return constraint_factory.for_each(Teacher) \

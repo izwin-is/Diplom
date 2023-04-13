@@ -6,9 +6,22 @@ from optapy import planning_solution, planning_entity_collection_property, \
                    value_range_provider, planning_score
 from optapy.score import HardSoftScore
 
-PAIR_DAILY = 3
+PAIR_DAILY = 4
 NUM_DAYS = 3
 WEEK = ['MON', 'TUE', 'WED']
+studentGroup_name_list = ["Б01-901", "Б02-902", "Б03-903", "Б04-904", "Б05-905",
+                          "Б06-906", "Б07-907", "Б08-908", "Б09-909"]
+syllabus = {
+    "Б01-901": {"sem":1, "lab": 1},
+    "Б02-902": {"sem":1, "lab": 1},
+    "Б03-903": {"sem":1, "lab": 1},
+    "Б04-904": {"sem":1, "lab": 1},
+    "Б05-905": {"sem":1, "lab": 1},
+    "Б06-906": {"sem":1, "lab": 1},
+    "Б07-907": {"sem":1, "lab": 1},
+    "Б08-908": {"sem":2, "lab": 2},
+    "Б09-909": {"sem":4, "lab": 2}
+}
 
 def calculate_week_day(slot_id):
     return WEEK[(slot_id - 1) // PAIR_DAILY]
@@ -16,13 +29,14 @@ def calculate_lesson_num(slot_id):
     return (slot_id - 1) % PAIR_DAILY + 1
 @problem_fact
 class Teacher:
-    def __init__(self, id, name, slots, lesson_types=None, max_lessons=None, max_days=NUM_DAYS):
+    def __init__(self, id, name, slots, lesson_list=None, min_lessons=3, max_lessons=6, max_days=2):
         self.id = id
         self.name = name
         self.slots = slots
-        self.max_lessons = max_lessons
-        self.lesson_types = lesson_types
+        self.lesson_list = lesson_list
         self.max_days = max_days
+        self.min_lessons = min_lessons
+        self.max_lessons = max_lessons
 
     @planning_id
     def get_id(self):
@@ -70,8 +84,7 @@ class Lesson:
         self.teacher = teacher
         self.student_group = student_group
         self.timeslot = timeslot
-        self.week_day = None
-        self.lesson_num = None
+        self.a = 1
 
     # def refresh(self):
     #     try:
@@ -93,7 +106,7 @@ class Lesson:
 
     def set_timeslot(self, new_timeslot):
         self.timeslot = new_timeslot
-        # self.refresh()
+        # self.a += 1
 
 
     @planning_variable(Teacher, ["teacherRange"])
@@ -116,12 +129,12 @@ class Lesson:
                f"student_group={self.student_group}, " \
                f"subject={self.subject}, " \
                f"teacher={self.teacher})"
-
+        # return f"""cur.execute("INSERT INTO lessons VALUES ({self.student_group.id}, '{self.subject}', {self.teacher.id})")"""
 
 def format_list(a_list):
     return '\n'.join(map(str, a_list))
 
-def print_total_x(line, x=15):
+def print_total_x(line, x=19):
     line = str(line)
     print(f"{line}{' ' * (x - len(line))}", end='')
 
@@ -183,7 +196,8 @@ class TimeTable:
                      self.lesson_list[lesson_index].timeslot.id != timeslot_id:
                     print_total_x('')
                 else:
-                    print_total_x(self.lesson_list[lesson_index].student_group)
+                    print_total_x(f"{self.lesson_list[lesson_index].student_group}."
+                                  f"{self.lesson_list[lesson_index].subject}")
                     lesson_index += 1
             print()
 

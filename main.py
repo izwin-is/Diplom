@@ -9,12 +9,13 @@ solver_config = optapy.config.solver.SolverConfig() \
     .withEntityClasses(Lesson) \
     .withSolutionClass(TimeTable) \
     .withConstraintProviderClass(define_constraints) \
-    .withTerminationSpentLimit(Duration.ofSeconds(5))
+    .withTerminationSpentLimit(Duration.ofSeconds(10))
 
 
 
 solution = solver_factory_create(solver_config) \
     .buildSolver() \
     .solve(generate_problem())
+# solution = generate_problem()
 
 print(solution)
