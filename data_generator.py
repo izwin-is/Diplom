@@ -31,7 +31,17 @@ def count_possibilities_needs(teacher_list):
 
 
 def generate_problem():
-    timeslot_list = [Timeslot(i + 1) for i in range(NUM_DAYS * PAIR_DAILY)]
+    single_timeslot_list = [Timeslot(i + 1, i + 1, 1) for i in range(NUM_DAYS * PAIR_DAILY)]
+    id = NUM_DAYS * PAIR_DAILY + 1
+    starts_double_lessons = [i + 1 for i in range(NUM_DAYS * PAIR_DAILY) if (i + 1) % PAIR_DAILY]
+    double_timeslot_list = []
+    for i in starts_double_lessons:
+        double_timeslot_list.append(Timeslot(id, i, 2))
+        id += 1
+    timeslot_list = single_timeslot_list + double_timeslot_list
+    # timeslot_list = double_timeslot_list
+    # for i in double_timeslot_list:
+    #     print(i)
 
     always_timeslot_list = list(range(1, NUM_DAYS * PAIR_DAILY + 1))
     teacher_list = [
@@ -43,7 +53,7 @@ def generate_problem():
         Teacher(6, "Faraday", always_timeslot_list, lesson_list={'sem': [1, 4], 'lab': [1, 2]}),
         # Teacher(7, "Gelfand", always_timeslot_list, lesson_list={'sem': [1, 3], 'lab': [1, 2]}),
     ]
-    count_possibilities_needs(teacher_list)
+    # count_possibilities_needs(teacher_list)
 
     studentGroup_list = [
         StudentGroup(1, studentGroup_name_list[0], always_timeslot_list),
@@ -63,7 +73,12 @@ def generate_problem():
         studentGroup_lesson_dict = syllabus[studentGroup.name]
         for lesson_name in studentGroup_lesson_dict.keys():
             for j in range(studentGroup_lesson_dict[lesson_name]):
-                lesson_list.append(Lesson(lesson_id, lesson_name, studentGroup))
+                if 'lab' in lesson_name:
+                    lesson_list.append(Lesson(lesson_id, lesson_name, studentGroup, duration=2,
+                                              possible_timeslots=double_timeslot_list))
+                else:
+                    lesson_list.append(Lesson(lesson_id, lesson_name, studentGroup,
+                                              possible_timeslots=single_timeslot_list))
                 lesson_id += 1
 
     return TimeTable(timeslot_list, lesson_list, teacher_list, studentGroup_list)

@@ -1,3 +1,4 @@
+from db_filler import fill_db
 studentGroup_name_list = ["Б01-901", "Б02-902", "Б03-903", "Б04-904", "Б05-905",
                           "Б06-906", "Б07-907", "Б08-908", "Б09-909"]
 syllabus = {
@@ -12,6 +13,11 @@ syllabus = {
     "Б09-909": {"sem":2, "lab": 2}
 }
 
-l, r = 5, 13
-for i in range(20):
-    print(i, r - i, i - l)
+PAIR_DAILY = 4
+NUM_DAYS = 3
+
+mainset = {1, 2, 3}
+subset = {1, 3, 5}
+mainset = mainset.union(subset)
+print(mainset)
+

@@ -9,7 +9,7 @@ solver_config = optapy.config.solver.SolverConfig() \
     .withEntityClasses(Lesson) \
     .withSolutionClass(TimeTable) \
     .withConstraintProviderClass(define_constraints) \
-    .withTerminationSpentLimit(Duration.ofSeconds(10))
+    .withTerminationSpentLimit(Duration.ofSeconds(3))
 
 
 

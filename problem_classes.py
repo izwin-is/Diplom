@@ -5,6 +5,7 @@ from optapy import planning_solution, planning_entity_collection_property, \
                    problem_fact_collection_property, \
                    value_range_provider, planning_score
 from optapy.score import HardSoftScore
+from db_filler import fill_db
 
 PAIR_DAILY = 4
 NUM_DAYS = 3
@@ -63,28 +64,35 @@ class StudentGroup:
 
 @problem_fact
 class Timeslot:
-    def __init__(self, id):
+    def __init__(self, id, start, duration):
         self.id = id
-        self.week_day = calculate_week_day(id)
-        self.lesson_num = calculate_lesson_num(id)
+        self.start = start
+        self.duration = duration
+        self.end = start + duration - 1
+        self.week_day = calculate_week_day(start)
+        self.lesson_num = calculate_lesson_num(start)
 
     @planning_id
     def get_id(self):
         return self.id
 
+    def start_end_set(self):
+        return {self.start, self.end}
+
     def __str__(self):
-        return f"Timeslot({self.id})"
+        return f"Timeslot({self.id}:{self.start}-{self.end})"
 
 
 @planning_entity
 class Lesson:
-    def __init__(self, id, subject, student_group, timeslot=None, teacher=None):
+    def __init__(self, id, subject, student_group, duration=1, possible_timeslots=None, timeslot=None, teacher=None):
         self.id = id
         self.subject = subject
         self.teacher = teacher
         self.student_group = student_group
         self.timeslot = timeslot
-        self.a = 1
+        self.duration = duration
+        self.possible_timeslots = possible_timeslots
 
     # def refresh(self):
     #     try:
@@ -100,13 +108,16 @@ class Lesson:
     def get_id(self):
         return self.id
 
-    @planning_variable(Timeslot, ["timeslotRange"])
+    @planning_variable(Timeslot, value_range_provider_refs=["timeslotPosRange"])
     def get_timeslot(self):
         return self.timeslot
 
+    @value_range_provider(range_id="timeslotPosRange", value_range_type=Timeslot)
+    def get_possible_timeslot_list(self):
+        return self.possible_timeslots
+
     def set_timeslot(self, new_timeslot):
         self.timeslot = new_timeslot
-        # self.a += 1
 
 
     @planning_variable(Teacher, ["teacherRange"])
@@ -128,7 +139,8 @@ class Lesson:
                f"{self.timeslot}, " \
                f"student_group={self.student_group}, " \
                f"subject={self.subject}, " \
-               f"teacher={self.teacher})"
+               f"teacher={self.teacher}, " \
+               f"duration={self.duration})"
         # return f"""cur.execute("INSERT INTO lessons VALUES ({self.student_group.id}, '{self.subject}', {self.teacher.id})")"""
 
 def format_list(a_list):
@@ -175,32 +187,30 @@ class TimeTable:
 
     def __str__(self):
 
-        self.teacher_list.sort(key=lambda teacher: teacher.id)
-        self.timeslot_list.sort(key=lambda timeslot: timeslot.id)
-        teacher_id_list = [teacher.id for teacher in self.teacher_list]
-        timeslot_id_list = [timeslot.id for timeslot in self.timeslot_list]
-        self.lesson_list.sort(key=lambda lesson: (lesson.timeslot.id, lesson.teacher.id))
-        print_total_x('')
-        for teacher in self.teacher_list:
-            print_total_x(teacher.name)
-        print()
-        # print(teacher_id_list)
-        # print(timeslot_id_list)
-        lesson_index = 0
-        for timeslot_id in timeslot_id_list:
-            print_total_x(f"{timeslot_id}:{calculate_week_day(timeslot_id)}:{calculate_lesson_num(timeslot_id)}")
-            for teacher_id in teacher_id_list:
-                if lesson_index == len(self.lesson_list):
-                    break
-                elif self.lesson_list[lesson_index].teacher.id != teacher_id or \
-                     self.lesson_list[lesson_index].timeslot.id != timeslot_id:
-                    print_total_x('')
-                else:
-                    print_total_x(f"{self.lesson_list[lesson_index].student_group}."
-                                  f"{self.lesson_list[lesson_index].subject}")
-                    lesson_index += 1
-            print()
-
+        # self.teacher_list.sort(key=lambda teacher: teacher.id)
+        # self.timeslot_list.sort(key=lambda timeslot: timeslot.id)
+        # teacher_id_list = [teacher.id for teacher in self.teacher_list]
+        # timeslot_id_list = [timeslot.id for timeslot in self.timeslot_list]
+        # self.lesson_list.sort(key=lambda lesson: (lesson.timeslot.id, lesson.teacher.id))
+        # print_total_x('')
+        # for teacher in self.teacher_list:
+        #     print_total_x(teacher.name)
+        # print()
+        # lesson_index = 0
+        # for timeslot_id in timeslot_id_list:
+        #     print_total_x(f"{timeslot_id}:{calculate_week_day(timeslot_id)}:{calculate_lesson_num(timeslot_id)}")
+        #     for teacher_id in teacher_id_list:
+        #         if lesson_index == len(self.lesson_list):
+        #             break
+        #         elif self.lesson_list[lesson_index].teacher.id != teacher_id or \
+        #              self.lesson_list[lesson_index].timeslot.id != timeslot_id:
+        #             print_total_x('')
+        #         else:
+        #             print_total_x(f"{self.lesson_list[lesson_index].student_group}."
+        #                           f"{self.lesson_list[lesson_index].subject}")
+        #             lesson_index += 1
+        #     print()
+        fill_db(self.lesson_list)
         return f"{format_list(self.lesson_list)}\n"\
                f"score={str(self.score.toString()) if self.score is not None else 'None'}"
 
