@@ -1,5 +1,6 @@
 from problem_classes import Timeslot, Teacher, Lesson, TimeTable,\
-    StudentGroup, NUM_DAYS, PAIR_DAILY, studentGroup_name_list, syllabus
+    StudentGroup, studentGroup_name_list, syllabus
+from constants_and_functions import *
 
 def count_possibilities_needs(teacher_list):
     # slot_pos_list = [None] * (NUM_DAYS * PAIR_DAILY)
@@ -45,19 +46,19 @@ def generate_problem():
 
     always_timeslot_list = list(range(1, NUM_DAYS * PAIR_DAILY + 1))
     teacher_list = [
-        Teacher(1, "Aristotel", [3, 4, 5, 6], lesson_list={'sem': [1, 3], 'lab': [1, 2]}),
-        Teacher(2, "Bugulma", [1, 5, 11, 12], lesson_list={'sem': [1, 3], 'lab': [1, 2]}),
-        Teacher(3, "Celsius", [1, 2, 3, 4], lesson_list={'sem': [1, 3], 'lab': [1, 2]}),
-        Teacher(4, "Decart", always_timeslot_list, lesson_list={'sem': [1, 3], 'lab': [1, 2]}, max_days=1),
-        Teacher(5, "Euclid", always_timeslot_list, lesson_list={'sem': [1, 3], 'lab': [1, 2]}),
+        Teacher(1, "Aristotel", [1, 2, 3, 4, 5], lesson_list={'sem': [1, 3], 'lab': [1, 2]}, max_days=1),
+        Teacher(2, "Bugulma", always_timeslot_list, lesson_list={'sem': [1, 3], 'lab': [1, 2]}, max_days=1),
+        Teacher(3, "Celsius", [1, 2, 6, 7, 11, 12], lesson_list={'sem': [1, 3], 'lab': [1, 2]}),
+        Teacher(4, "Decart", always_timeslot_list, lesson_list={'sem': [1, 3], 'lab': [1, 2]}),
+        Teacher(5, "Euclid", always_timeslot_list, lesson_list={'sem': [1, 4], 'lab': [1, 2]}),
         Teacher(6, "Faraday", always_timeslot_list, lesson_list={'sem': [1, 4], 'lab': [1, 2]}),
-        # Teacher(7, "Gelfand", always_timeslot_list, lesson_list={'sem': [1, 3], 'lab': [1, 2]}),
+        Teacher(7, "Gelfand", [6, 7, 8, 9, 10], lesson_list={'sem': [1, 3], 'lab': [1, 2]}, max_days=1),
     ]
     # count_possibilities_needs(teacher_list)
 
     studentGroup_list = [
-        StudentGroup(1, studentGroup_name_list[0], always_timeslot_list),
-        StudentGroup(2, studentGroup_name_list[1], always_timeslot_list),
+        StudentGroup(1, studentGroup_name_list[0], [1, 2, 5, 6, 9, 10, 11]),
+        StudentGroup(2, studentGroup_name_list[1], [8, 9, 11, 12, 13, 14, 15]),
         StudentGroup(3, studentGroup_name_list[2], always_timeslot_list),
         StudentGroup(4, studentGroup_name_list[3], always_timeslot_list),
         StudentGroup(5, studentGroup_name_list[4], always_timeslot_list),
@@ -80,5 +81,7 @@ def generate_problem():
                     lesson_list.append(Lesson(lesson_id, lesson_name, studentGroup,
                                               possible_timeslots=single_timeslot_list))
                 lesson_id += 1
+
+    count_possibilities_needs(teacher_list)
 
     return TimeTable(timeslot_list, lesson_list, teacher_list, studentGroup_list)

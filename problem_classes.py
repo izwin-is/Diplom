@@ -6,10 +6,9 @@ from optapy import planning_solution, planning_entity_collection_property, \
                    value_range_provider, planning_score
 from optapy.score import HardSoftScore
 from db_filler import fill_db
+from show_timetable import show_timetable
+from constants_and_functions import *
 
-PAIR_DAILY = 4
-NUM_DAYS = 3
-WEEK = ['MON', 'TUE', 'WED']
 studentGroup_name_list = ["Б01-901", "Б02-902", "Б03-903", "Б04-904", "Б05-905",
                           "Б06-906", "Б07-907", "Б08-908", "Б09-909"]
 syllabus = {
@@ -24,20 +23,25 @@ syllabus = {
     "Б09-909": {"sem":4, "lab": 2}
 }
 
-def calculate_week_day(slot_id):
-    return WEEK[(slot_id - 1) // PAIR_DAILY]
-def calculate_lesson_num(slot_id):
-    return (slot_id - 1) % PAIR_DAILY + 1
+
 @problem_fact
 class Teacher:
-    def __init__(self, id, name, slots, lesson_list=None, min_lessons=3, max_lessons=6, max_days=2):
+    def __init__(self, id, name, slots, lesson_list=None, min_lessons=4, max_lessons=10, max_days=2):
         self.id = id
         self.name = name
         self.slots = slots
         self.lesson_list = lesson_list
         self.max_days = max_days
         self.min_lessons = min_lessons
-        self.max_lessons = max_lessons
+        self.max_lessons = min(max_lessons, len(slots), max_days * PAIR_DAILY)
+        self.slots_set = set(slots)
+        max_lessons_from_lesson_list = 0
+        for subject in lesson_list.keys():
+            if 'lab' in subject:
+                max_lessons_from_lesson_list += 2 * lesson_list[subject][1]
+            else:
+                max_lessons_from_lesson_list += lesson_list[subject][1]
+        self.max_lessons = min(self.max_lessons, max_lessons_from_lesson_list)
 
     @planning_id
     def get_id(self):
@@ -53,6 +57,7 @@ class StudentGroup:
         self.name = name
         self.slots = slots
         self.lesson_list = lesson_list
+        self.slots_set = set(slots)
 
     @planning_id
     def get_id(self):
@@ -71,6 +76,7 @@ class Timeslot:
         self.end = start + duration - 1
         self.week_day = calculate_week_day(start)
         self.lesson_num = calculate_lesson_num(start)
+        self.start_end_set = {self.start, self.end}
 
     @planning_id
     def get_id(self):
@@ -146,9 +152,7 @@ class Lesson:
 def format_list(a_list):
     return '\n'.join(map(str, a_list))
 
-def print_total_x(line, x=19):
-    line = str(line)
-    print(f"{line}{' ' * (x - len(line))}", end='')
+
 
 @planning_solution
 class TimeTable:
@@ -187,30 +191,9 @@ class TimeTable:
 
     def __str__(self):
 
-        # self.teacher_list.sort(key=lambda teacher: teacher.id)
-        # self.timeslot_list.sort(key=lambda timeslot: timeslot.id)
-        # teacher_id_list = [teacher.id for teacher in self.teacher_list]
-        # timeslot_id_list = [timeslot.id for timeslot in self.timeslot_list]
-        # self.lesson_list.sort(key=lambda lesson: (lesson.timeslot.id, lesson.teacher.id))
-        # print_total_x('')
-        # for teacher in self.teacher_list:
-        #     print_total_x(teacher.name)
-        # print()
-        # lesson_index = 0
-        # for timeslot_id in timeslot_id_list:
-        #     print_total_x(f"{timeslot_id}:{calculate_week_day(timeslot_id)}:{calculate_lesson_num(timeslot_id)}")
-        #     for teacher_id in teacher_id_list:
-        #         if lesson_index == len(self.lesson_list):
-        #             break
-        #         elif self.lesson_list[lesson_index].teacher.id != teacher_id or \
-        #              self.lesson_list[lesson_index].timeslot.id != timeslot_id:
-        #             print_total_x('')
-        #         else:
-        #             print_total_x(f"{self.lesson_list[lesson_index].student_group}."
-        #                           f"{self.lesson_list[lesson_index].subject}")
-        #             lesson_index += 1
-        #     print()
         fill_db(self.lesson_list)
-        return f"{format_list(self.lesson_list)}\n"\
-               f"score={str(self.score.toString()) if self.score is not None else 'None'}"
+        show_timetable()
+        # return f"{format_list(self.lesson_list)}\n"\
+        #        f"score={str(self.score.toString()) if self.score is not None else 'None'}"
+        return f"score={str(self.score.toString()) if self.score is not None else 'None'}"
 
