@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<solver xmlns="https://www.optaplanner.org/xsd/solver" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://www.optaplanner.org/xsd/solver https://www.optaplanner.org/xsd/solver/solver.xsd">
+  <!-- Define the model -->
+  <solutionClass>problem_classes.TimeTable</solutionClass>
+  <entityClass>problem_classes.Lesson</entityClass>
+
+  <termination>
+    <bestScoreLimit>0hard/0soft</bestScoreLimit>
+  </termination>
+
+  <constructionHeuristic>
+    <constructionHeuristicType>FIRST_FIT</constructionHeuristicType>
+  </constructionHeuristic>
+
+  <localSearch>
+    <termination>
+      <secondsSpentLimit>10</secondsSpentLimit>
+    </termination>
+    <localSearchType>LATE_ACCEPTANCE</localSearchType>
+  </localSearch>
+
+  <localSearch>
+    <termination>
+      <secondsSpentLimit>10</secondsSpentLimit>
+    </termination>
+    <acceptor>
+      <entityTabuRatio>0.02</entityTabuRatio>
+    </acceptor>
+    <forager>
+      <acceptedCountLimit>1000</acceptedCountLimit>
+    </forager>
+  </localSearch>
+
+  <localSearch>
+    <termination>
+      <secondsSpentLimit>10</secondsSpentLimit>
+    </termination>
+    <localSearchType>LATE_ACCEPTANCE</localSearchType>
+  </localSearch>
+
+  <localSearch>
+    <termination>
+      <secondsSpentLimit>10</secondsSpentLimit>
+    </termination>
+    <acceptor>
+      <entityTabuRatio>0.02</entityTabuRatio>
+    </acceptor>
+    <forager>
+      <acceptedCountLimit>1000</acceptedCountLimit>
+    </forager>
+  </localSearch>
+
+  <localSearch>
+    <termination>
+      <secondsSpentLimit>50</secondsSpentLimit>
+    </termination>
+    <localSearchType>LATE_ACCEPTANCE</localSearchType>
+  </localSearch>
+
+  <localSearch>
+    <acceptor>
+      <entityTabuRatio>0.02</entityTabuRatio>
+    </acceptor>
+    <forager>
+      <acceptedCountLimit>1000</acceptedCountLimit>
+    </forager>
+  </localSearch>
+</solver>

@@ -40,7 +40,7 @@ def define_constraints(constraint_factory):
         teacher_max_days(constraint_factory),
         teacher_min_max_lessons_total(constraint_factory),
         teacher_min_max_lessons_particular(constraint_factory),
-
+        one_lesson_per_day(constraint_factory),
         # teacher_min_lessons_total(constraint_factory),
     ]
 
@@ -80,8 +80,11 @@ def count_subject_discrepancy(teacher, lesson_list):
         actual_subject_dict[lesson.subject] += 1
     mis_score = 0
     for subject in actual_subject_dict.keys():
-        mis_score += positive_score(-min(teacher.lesson_list[subject][1] - actual_subject_dict[subject],
-                                    actual_subject_dict[subject] - teacher.lesson_list[subject][0]))
+        if subject in teacher.lesson_list:
+            mis_score += positive_score(-min(teacher.lesson_list[subject][1] - actual_subject_dict[subject],
+                                        actual_subject_dict[subject] - teacher.lesson_list[subject][0]))
+        else:
+            mis_score += actual_subject_dict[subject]
     return mis_score
 
 
@@ -102,6 +105,15 @@ def teacher_min_max_lessons_total(constraint_factory: ConstraintFactory):
                   HardSoftScore.ONE_SOFT,
                   lambda teacher, count: positive_score(-min(teacher.max_lessons - count,
                                                              count - teacher.min_lessons)))
+
+def one_lesson_per_day(constraint_factory: ConstraintFactory):
+    return constraint_factory.for_each(Lesson) \
+        .group_by(lambda lesson: lesson.student_group,
+                  lambda lesson: lesson.timeslot.week_day,
+                  ConstraintCollectors.count()) \
+        .penalize("More than one student's group lesson per day",
+                  HardSoftScore.ONE_SOFT,
+                  lambda student_group, week_day, count: positive_score(count - 1))
 
 
 def teacher_at_least_one_lesson(constraint_factory: ConstraintFactory):
@@ -142,7 +154,7 @@ def teacher_max_days(constraint_factory: ConstraintFactory):
                   ConstraintCollectors.countTri()) \
         .penalize("",
                   HardSoftScore.ONE_SOFT,
-                  lambda teacher, count: 3 * positive_score(count - teacher.max_days))
+                  lambda teacher, count: positive_score(count - teacher.max_days))
 
 
 def teacher_timing(constraint_factory: ConstraintFactory):
@@ -176,8 +188,7 @@ def student_group_conflict(constraint_factory: ConstraintFactory):
     # A student can attend at most one lesson at the same time.
     return constraint_factory.for_each(Lesson) \
         .group_by(lambda lesson: lesson.student_group,
-                  lambda lesson: lesson.teacher,
                   ConstraintCollectors.to_list()) \
         .penalize("Student group conflict",
                   HardSoftScore.ONE_HARD,
-                  lambda student_group, teacher, lesson_list: timeslots_intersection(lesson_list))
+                  lambda student_group, lesson_list: timeslots_intersection(lesson_list))

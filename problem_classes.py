@@ -10,7 +10,7 @@ from show_timetable import show_timetable
 from constants_and_functions import *
 
 studentGroup_name_list = ["Б01-901", "Б02-902", "Б03-903", "Б04-904", "Б05-905",
-                          "Б06-906", "Б07-907", "Б08-908", "Б09-909"]
+                          "Б06-906", "Б07-907", "Б08-908", "Б09-909", "Б10-910", "Б11-911", "Б12-912"]
 syllabus = {
     "Б01-901": {"sem":1, "lab": 1},
     "Б02-902": {"sem":1, "lab": 1},
@@ -19,8 +19,11 @@ syllabus = {
     "Б05-905": {"sem":1, "lab": 1},
     "Б06-906": {"sem":1, "lab": 1},
     "Б07-907": {"sem":1, "lab": 1},
-    "Б08-908": {"sem":2, "lab": 2},
-    "Б09-909": {"sem":4, "lab": 2}
+    "Б08-908": {"sem":2, "lab": 1},
+    "Б09-909": {"sem":2, "lab": 1},
+    "Б10-910": {"sem":2, "lab": 1},
+    "Б11-911": {"sem":2, "lab": 1},
+    "Б12-912": {"sem":2, "lab": 1},
 }
 
 
@@ -91,7 +94,7 @@ class Timeslot:
 
 @planning_entity
 class Lesson:
-    def __init__(self, id, subject, student_group, duration=1, possible_timeslots=None, timeslot=None, teacher=None):
+    def __init__(self, id, subject, student_group, duration=1, possible_timeslots=None, timeslot=None, teacher=None, possible_teacher_list=None):
         self.id = id
         self.subject = subject
         self.teacher = teacher
@@ -99,6 +102,7 @@ class Lesson:
         self.timeslot = timeslot
         self.duration = duration
         self.possible_timeslots = possible_timeslots
+        self.possible_teacher_list = possible_teacher_list
 
     # def refresh(self):
     #     try:
@@ -189,6 +193,9 @@ class TimeTable:
     def set_score(self, score):
         self.score = score
 
+
+    def write_to_db(self):
+        fill_db(self.lesson_list)
     def __str__(self):
 
         fill_db(self.lesson_list)
@@ -196,4 +203,6 @@ class TimeTable:
         # return f"{format_list(self.lesson_list)}\n"\
         #        f"score={str(self.score.toString()) if self.score is not None else 'None'}"
         return f"score={str(self.score.toString()) if self.score is not None else 'None'}"
+
+
 

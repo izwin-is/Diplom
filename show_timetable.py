@@ -39,3 +39,5 @@ def show_timetable():
 
         print_timetable(teachers_lessons)
 
+if __name__=='__main__':
+    show_timetable()
