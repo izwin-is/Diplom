@@ -1,24 +1,17 @@
-from constants_and_functions import *
+import sqlite3 as sq
 
-class Teacher:
-    def __init__(self, id, name, slots, lesson_list=None, min_lessons=4, max_lessons=10, max_days=2):
-        self.id = id
-        self.name = name
-        self.slots = slots
-        self.lesson_list = lesson_list
-        self.max_days = max_days
-        self.min_lessons = min_lessons
-        self.max_lessons = min(max_lessons, len(slots), max_days * PAIR_DAILY)
-        self.slots_set = set(slots)
-        max_lessons_from_lesson_list = 0
-        for subject in lesson_list.keys():
-            if 'lab' in lesson_list[subject]:
-                max_lessons_from_lesson_list += 2 * lesson_list[subject][1]
-            else:
-                max_lessons_from_lesson_list += lesson_list[subject][1]
-        self.max_lessons = min(self.max_lessons, max_lessons_from_lesson_list)
+with sq.connect("lessons.db") as con:
+    cur = con.cursor()
+    cur.execute("""SELECT * FROM teacher""")
+    result = cur.fetchall()
+    for i in result:
+        print(i)
 
-
-always_timeslot_list = list(range(1, NUM_DAYS * PAIR_DAILY + 1))
-a = Teacher(1, "Aristotel", always_timeslot_list, lesson_list={'sem': [1, 3], 'lab': [1, 2]})
-print(a.max_lessons)
+# with open('teacherinfo.csv', newline='') as csvfile:
+#     reader = csv.reader(csvfile, delimiter=',')
+#     teacher_list = []
+#     for i, row in enumerate(reader):
+#         techer_timeslot_list = list(always_timeslot_set.difference(set(map(int, row[7].split(',')))))
+#         teacher_list.append(Teacher(i + 1, row[0][:15], techer_timeslot_list,
+#                                     possible_years=set(map(int, row[1].split(','))),
+#                                     min_lessons=int(row[2]), max_lessons=int(row[3]), max_days=int(row[4])))

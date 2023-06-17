@@ -9,42 +9,27 @@ from db_filler import fill_db
 from show_timetable import show_timetable
 from constants_and_functions import *
 
-studentGroup_name_list = ["Б01-901", "Б02-902", "Б03-903", "Б04-904", "Б05-905",
-                          "Б06-906", "Б07-907", "Б08-908", "Б09-909", "Б10-910", "Б11-911", "Б12-912"]
-syllabus = {
-    "Б01-901": {"sem":1, "lab": 1},
-    "Б02-902": {"sem":1, "lab": 1},
-    "Б03-903": {"sem":1, "lab": 1},
-    "Б04-904": {"sem":1, "lab": 1},
-    "Б05-905": {"sem":1, "lab": 1},
-    "Б06-906": {"sem":1, "lab": 1},
-    "Б07-907": {"sem":1, "lab": 1},
-    "Б08-908": {"sem":2, "lab": 1},
-    "Б09-909": {"sem":2, "lab": 1},
-    "Б10-910": {"sem":2, "lab": 1},
-    "Б11-911": {"sem":2, "lab": 1},
-    "Б12-912": {"sem":2, "lab": 1},
-}
 
 
 @problem_fact
 class Teacher:
-    def __init__(self, id, name, slots, lesson_list=None, min_lessons=4, max_lessons=10, max_days=2):
+    def __init__(self, id, name, slots, lesson_list=None, possible_years={1, 2, 3}, min_lessons=4, max_lessons=10, max_days=2):
         self.id = id
         self.name = name
         self.slots = slots
         self.lesson_list = lesson_list
+        self.possible_years = possible_years
         self.max_days = max_days
         self.min_lessons = min_lessons
         self.max_lessons = min(max_lessons, len(slots), max_days * PAIR_DAILY)
         self.slots_set = set(slots)
-        max_lessons_from_lesson_list = 0
-        for subject in lesson_list.keys():
-            if 'lab' in subject:
-                max_lessons_from_lesson_list += 2 * lesson_list[subject][1]
-            else:
-                max_lessons_from_lesson_list += lesson_list[subject][1]
-        self.max_lessons = min(self.max_lessons, max_lessons_from_lesson_list)
+        # max_lessons_from_lesson_list = 0
+        # for subject in lesson_list.keys():
+        #     if 'lab' in subject:
+        #         max_lessons_from_lesson_list += 2 * lesson_list[subject][1]
+        #     else:
+        #         max_lessons_from_lesson_list += lesson_list[subject][1]
+        # self.max_lessons = min(self.max_lessons, max_lessons_from_lesson_list)
 
     @planning_id
     def get_id(self):
@@ -55,10 +40,11 @@ class Teacher:
 
 @problem_fact
 class StudentGroup:
-    def __init__(self, id, name, slots, lesson_list=None):
+    def __init__(self, id, name, slots, year, lesson_list=None):
         self.id = id
         self.name = name
         self.slots = slots
+        self.year = year
         self.lesson_list = lesson_list
         self.slots_set = set(slots)
 
@@ -130,9 +116,14 @@ class Lesson:
         self.timeslot = new_timeslot
 
 
-    @planning_variable(Teacher, ["teacherRange"])
+    @planning_variable(Teacher, value_range_provider_refs=["teacherPosRange"])
     def get_teacher(self):
         return self.teacher
+
+    @value_range_provider(range_id="teacherPosRange", value_range_type=Teacher)
+    def get_possible_teacher_list(self):
+        return self.possible_teacher_list
+
 
     def set_teacher(self, new_teacher):
         self.teacher = new_teacher

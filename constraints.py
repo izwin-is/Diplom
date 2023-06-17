@@ -31,16 +31,21 @@ def define_constraints(constraint_factory):
         teacher_timing(constraint_factory),
         student_group_timing(constraint_factory),
         teacher_at_least_one_lesson(constraint_factory),
+        lab_divided_group(constraint_factory),
+        lab_lesson_limit_at_once(constraint_factory),
         # teacher_max_lessons_total(constraint_factory),
         # teacher_min_lessons_total(constraint_factory)
         # teacher_max_lessons_total(constraint_factory),
-        one_teacher_to_group(constraint_factory),
-        # lab_start_end(constraint_factory)
+
+        # one_teacher_to_group(constraint_factory),
+
+
         # Soft constraints
         teacher_max_days(constraint_factory),
         teacher_min_max_lessons_total(constraint_factory),
-        teacher_min_max_lessons_particular(constraint_factory),
-        one_lesson_per_day(constraint_factory),
+        # teacher_min_max_lessons_particular(constraint_factory),
+        # one_lesson_per_day(constraint_factory),
+
         # teacher_min_lessons_total(constraint_factory),
     ]
 
@@ -54,12 +59,61 @@ def timeslots_intersection(lesson_list):
         timeslot_set = timeslot_set.union(one_timeslot_set)
     return sum_set_len - len(timeslot_set)
 
+def timeslots_intersection_group(lesson_list):
+    lab_list = [lesson.timeslot for lesson in lesson_list if lesson.subject=='lab']
+    sem_list = [lesson.timeslot for lesson in lesson_list if lesson.subject=='sem']
+    if len(lab_list) != 0 and len(sem_list):
+        penalty = 0
+        for sem_timeslot in sem_list:
+            for lab_timeslot in lab_list:
+                penalty += len(sem_timeslot.start_end_set & lab_timeslot.start_end_set)
+        return penalty
+    return 0
+
 
 def count_teachers_num(lesson_list):
     teacher_set = set()
     for lesson in lesson_list:
         teacher_set.add(lesson.teacher)
     return len(teacher_set) - 1
+
+
+def sametime_lab_in_one_group(lesson_list):
+    if len(lesson_list) == 2:
+        if lesson_list[0].timeslot.id != lesson_list[1].timeslot.id:
+            return 1
+    return 0
+
+
+def lab_limit_score(lesson_list):
+    penalty = 0
+    lab_limit_list = [0] * 42
+    for lab in lesson_list:
+        lab_limit_list[lab.timeslot.start - 1] += 1
+        lab_limit_list[lab.timeslot.end - 1] += 1
+    for num_labs_at_once in lab_limit_list:
+        if num_labs_at_once > 10:
+            penalty += num_labs_at_once - 10
+    return penalty
+
+
+def lab_lesson_limit_at_once(constraint_factory: ConstraintFactory):
+    return constraint_factory.for_each(Lesson) \
+        .filter(lambda lesson: lesson.subject == 'lab') \
+        .group_by(lambda lesson: lesson.student_group.year,
+                  ConstraintCollectors.to_list()) \
+        .penalize("Lab limit at the same time",
+                  HardSoftScore.ONE_HARD,
+                  lambda year, lesson_list: lab_limit_score(lesson_list))
+
+def lab_divided_group(constraint_factory: ConstraintFactory):
+    return constraint_factory.for_each(Lesson) \
+        .filter(lambda lesson: lesson.subject == 'lab') \
+        .group_by(lambda lesson: lesson.student_group,
+                  ConstraintCollectors.to_list()) \
+        .penalize("Lab in one group is not at the same time",
+                  HardSoftScore.ONE_HARD,
+                  lambda group, lesson_list: sametime_lab_in_one_group(lesson_list))
 
 
 def one_teacher_to_group(constraint_factory: ConstraintFactory):
@@ -100,7 +154,7 @@ def teacher_min_max_lessons_particular(constraint_factory: ConstraintFactory):
 def teacher_min_max_lessons_total(constraint_factory: ConstraintFactory):
     return constraint_factory.for_each(Lesson) \
         .group_by(lambda lesson: lesson.teacher,
-                  ConstraintCollectors.sum(lambda lesson: lesson.duration)) \
+                  ConstraintCollectors.count()) \
         .penalize("Too many or too few lessons for teacher",
                   HardSoftScore.ONE_SOFT,
                   lambda teacher, count: positive_score(-min(teacher.max_lessons - count,
@@ -191,4 +245,4 @@ def student_group_conflict(constraint_factory: ConstraintFactory):
                   ConstraintCollectors.to_list()) \
         .penalize("Student group conflict",
                   HardSoftScore.ONE_HARD,
-                  lambda student_group, lesson_list: timeslots_intersection(lesson_list))
+                  lambda student_group, lesson_list: timeslots_intersection_group(lesson_list))

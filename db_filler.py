@@ -11,19 +11,21 @@ def fill_db(lesson_list):
                     INSERT INTO lesson (
                                         lesson_id,
                                         student_group,
-                                        teacher,
+                                        teacher_id,
                                         subject,
                                         duration,
                                         timeslot_start,
-                                        timeslot_end
+                                        timeslot_end,
+                                        week_day
                     )
                     VALUES (
                             {lesson.id},
                             '{lesson.student_group.name}',
-                            '{lesson.teacher.name}',
+                            '{lesson.teacher.id}',
                             '{lesson.subject}',
                             {lesson.duration},
                             {lesson.timeslot.start},
-                            {lesson.timeslot.end}
+                            {lesson.timeslot.end},
+                            '{lesson.timeslot.week_day}'
                     )
             """)

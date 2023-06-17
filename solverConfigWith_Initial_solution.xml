@@ -9,9 +9,6 @@
     <bestScoreLimit>0hard/0soft</bestScoreLimit>
   </termination>
 
-  <constructionHeuristic>
-    <constructionHeuristicType>FIRST_FIT</constructionHeuristicType>
-  </constructionHeuristic>
 
   <localSearch>
     <termination>

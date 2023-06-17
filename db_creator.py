@@ -8,9 +8,10 @@ def create_db():
         cur.execute("""CREATE TABLE IF NOT EXISTS lesson (
         lesson_id INTEGER PRIMARY KEY,
         student_group TEXT,
-        teacher TEXT,
+        teacher_id INTEGER,
         subject TEXT,
         duration INTEGER DEFAULT 1,
         timeslot_start INTEGER,
-        timeslot_end INTEGER
+        timeslot_end INTEGER,
+        week_day TEXT
         )""")
