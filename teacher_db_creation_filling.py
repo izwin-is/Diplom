@@ -16,8 +16,9 @@ with sq.connect("lessons.db") as con:
            max_lessons INTEGER,
            max_days INTEGER,
            non_possible_timeslots TEXT,
-           whishes_sem TEXT,
-           whishes_lab TEXT
+           wishes_sem TEXT,
+           wishes_lab TEXT,
+           wishes_general_group TEXT
            )""")
 
         with open('teacherinfo.csv', newline='') as csvfile:
@@ -32,8 +33,9 @@ with sq.connect("lessons.db") as con:
                                            max_lessons,
                                            max_days,
                                            non_possible_timeslots,
-                                           whishes_sem,
-                                           whishes_lab
+                                           wishes_sem,
+                                           wishes_lab,
+                                           wishes_general_group
                                     )
                                     VALUES (
                                             '{row[0]}',
@@ -42,6 +44,7 @@ with sq.connect("lessons.db") as con:
                                             {row[3]},
                                             {row[4]},
                                             '{row[7]}',
+                                            '{""}',
                                             '{""}',
                                             '{""}'
                                     )

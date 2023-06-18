@@ -13,7 +13,8 @@ from constants_and_functions import *
 
 @problem_fact
 class Teacher:
-    def __init__(self, id, name, slots, lesson_list=None, possible_years={1, 2, 3}, min_lessons=4, max_lessons=10, max_days=2):
+    def __init__(self, id, name, slots, lesson_list=None, possible_years={1, 2, 3},
+                 min_lessons=4, max_lessons=10, max_days=2, sem_wishes=None, lab_wishes=None):
         self.id = id
         self.name = name
         self.slots = slots
@@ -23,6 +24,17 @@ class Teacher:
         self.min_lessons = min_lessons
         self.max_lessons = min(max_lessons, len(slots), max_days * PAIR_DAILY)
         self.slots_set = set(slots)
+        self.sem_wishes = sem_wishes
+        self.lab_wishes = lab_wishes
+        if sem_wishes:
+            self.sem_wishes = set(sem_wishes)
+        else:
+            self.sem_wishes = None
+        if lab_wishes:
+            self.lab_wishes = set(lab_wishes)
+        else:
+            self.lab_wishes = None
+        self.any_wishes = bool(sem_wishes) or bool(lab_wishes)
         # max_lessons_from_lesson_list = 0
         # for subject in lesson_list.keys():
         #     if 'lab' in subject:

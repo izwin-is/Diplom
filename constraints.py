@@ -43,6 +43,7 @@ def define_constraints(constraint_factory):
         # Soft constraints
         teacher_max_days(constraint_factory),
         teacher_min_max_lessons_total(constraint_factory),
+        teacher_particular_student_group_wishes(constraint_factory),
         # teacher_min_max_lessons_particular(constraint_factory),
         # one_lesson_per_day(constraint_factory),
 
@@ -105,6 +106,27 @@ def lab_lesson_limit_at_once(constraint_factory: ConstraintFactory):
         .penalize("Lab limit at the same time",
                   HardSoftScore.ONE_HARD,
                   lambda year, lesson_list: lab_limit_score(lesson_list))
+
+
+def check_particular_wishes(teacher, lesson_list):
+    penalty = 0
+    if teacher.sem_wishes is not None:
+        penalty += len(teacher.sem_wishes.difference(set([lesson.student_group.name
+                                                          for lesson in lesson_list if lesson.subject == 'sem'])))
+    if teacher.lab_wishes is not None:
+        penalty += len(teacher.lab_wishes.difference(set([lesson.student_group.name
+                                                          for lesson in lesson_list if lesson.subject == 'lab'])))
+    return penalty
+
+def teacher_particular_student_group_wishes(constraint_factory: ConstraintFactory):
+    return constraint_factory.for_each(Lesson) \
+        .group_by(lambda lesson: lesson.teacher,
+                  ConstraintCollectors.to_list()) \
+        .filter(lambda teacher, lesson_list: teacher.any_wishes) \
+        .penalize("Teacher particular student group wishes",
+                  HardSoftScore.ONE_SOFT,
+                  lambda teacher, lesson_list: check_particular_wishes(teacher, lesson_list))
+
 
 def lab_divided_group(constraint_factory: ConstraintFactory):
     return constraint_factory.for_each(Lesson) \

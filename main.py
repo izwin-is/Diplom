@@ -31,7 +31,7 @@ def f(solution):
 print('0: Построить решение с нуля')
 print('1: Использовать уже существующее')
 flag = int(input())
-time = 3000
+time = 4000
 if flag:
     solver_config = solver_config_create_from_xml_file(pathlib.Path('solverConfigWith_Initial_solution.xml')) \
         .withConstraintProviderClass(define_constraints) \
